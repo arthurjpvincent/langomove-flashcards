@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex">
+<style>body{margin:0}</style>
+<title>Flashcards GS–CP</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700&family=Nunito:wght@600;800&display=swap">
+<style>
+/* Layout: phone-first; home = grid of 8 themes; card view = one flashcard filling the screen, controls in the thumb zone */
+:root{--bg:#f6f4ef;--panel:#ffffff;--ink:#16140f;--muted:#6a645a;--line:#16140f;--accent:#d9531e;--card:#ffffff;
+--display:'Fredoka',ui-rounded,system-ui,sans-serif;--body:'Nunito',system-ui,-apple-system,sans-serif}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#15130f;--panel:#201d18;--ink:#f2eee6;--muted:#aaa296;--line:#e6e0d4;--accent:#f07a45;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#15130f;--panel:#201d18;--ink:#f2eee6;--muted:#aaa296;--line:#e6e0d4;--accent:#f07a45;color-scheme:dark}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);-webkit-tap-highlight-color:transparent}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,a:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.home{max-width:900px;margin:0 auto;padding-inline:16px;padding-block:22px 40px}
+.home h1{font-family:var(--display);font-size:clamp(26px,6vw,36px);margin:0 0 4px;text-wrap:balance}
+.home p{color:var(--muted);margin:0 0 18px;font-size:14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+.tile{display:flex;flex-direction:column;gap:8px;text-align:left;background:var(--panel);border:2px solid var(--line);border-radius:14px;padding:12px 14px;text-decoration:none;color:inherit}
+.tile .top{display:flex;align-items:center;gap:10px}
+.tile .n{width:30px;height:30px;border:2px solid var(--line);border-radius:50%;display:grid;place-items:center;font-family:var(--display);font-weight:700;flex-shrink:0}
+.tile b{font-family:var(--display);font-size:18px;font-weight:600}
+.tile small{display:block;color:var(--muted);font-size:12.5px}
+.thumbs{display:grid;grid-template-columns:repeat(6,1fr);gap:4px}
+.thumbs img{width:100%;aspect-ratio:1;object-fit:contain;background:#fff;border-radius:6px;border:1px solid #ddd8ce}
+.links{display:flex;gap:8px}
+.links a{flex:1;text-align:center;font-weight:800;font-size:13px;border:2px solid var(--line);border-radius:9px;padding:6px 8px;text-decoration:none;color:inherit}
+.links a.pri{background:var(--ink);color:var(--bg)}
+/* card view */
+.view{height:100%;display:flex;flex-direction:column;padding:10px 12px calc(12px + env(safe-area-inset-bottom,0px))}
+.bar{display:flex;align-items:center;gap:10px;min-height:44px}
+.icon{color:inherit;text-decoration:none;width:44px;height:44px;border-radius:12px;border:2px solid var(--line);background:var(--panel);display:grid;place-items:center;flex-shrink:0}
+.icon svg{width:22px;height:22px}
+.bar .t{flex:1;min-width:0}
+.bar .t b{font-family:var(--display);font-size:18px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar .t span{font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.stage{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:10px 0}
+.card{background:var(--card);color:#16140f;border:3px solid #16140f;border-radius:22px;width:min(100%,calc((100vh - 200px) * .8));max-height:100%;aspect-ratio:4/5;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2vh;padding:4%;border-style:solid;touch-action:pan-y;user-select:none}
+.card img{width:100%;flex:1;min-height:0;object-fit:contain}
+.card .w{font-family:var(--display);font-weight:700;font-size:clamp(34px,9vmin,72px);line-height:1;text-align:center}
+.card.play{box-shadow:0 0 0 6px var(--accent)}
+.dots{display:flex;justify-content:center;gap:6px;padding:4px 0 10px}
+.dots i{width:9px;height:9px;border-radius:50%;background:var(--muted);opacity:.35}
+.dots i.on{opacity:1;background:var(--accent)}
+.ctrl{display:grid;grid-template-columns:1fr 1.4fr 1fr;gap:10px}
+.ctrl button{height:60px;border-radius:16px;border:2px solid var(--line);background:var(--panel);display:flex;align-items:center;justify-content:center;gap:8px;font-weight:800;font-size:15px}
+.ctrl .snd{background:var(--ink);color:var(--bg)}
+.ctrl svg{width:26px;height:26px}
+.auto{margin-top:10px;width:100%;height:46px;border-radius:14px;border:2px dashed var(--line);background:transparent;font-weight:800}
+.auto[aria-pressed="true"]{border-style:solid;background:var(--accent);border-color:var(--accent);color:#fff}
+/* sounds list */
+.list{flex:1;overflow:auto;display:flex;flex-direction:column;gap:8px;padding:12px 0}
+.row{display:flex;align-items:center;gap:12px;background:var(--panel);border:2px solid var(--line);border-radius:14px;padding:8px 10px}
+.row img{width:64px;height:64px;object-fit:contain;background:#fff;border-radius:10px;flex-shrink:0}
+.row b{flex:1;font-family:var(--display);font-size:24px;font-weight:600;min-width:0}
+.row.play{outline:4px solid var(--accent)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head><body>
+<div id="app"></div>
+<script>
+const DATA = [{"id": "couleurs", "n": 1, "fr": "Les couleurs", "en": "Colours", "words": [{"w": "red", "img": "img/s1w0.png", "mp3": "audio/red.mp3"}, {"w": "blue", "img": "img/s1w1.png", "mp3": "audio/blue.mp3"}, {"w": "green", "img": "img/s1w2.png", "mp3": "audio/green.mp3"}, {"w": "yellow", "img": "img/s1w3.png", "mp3": "audio/yellow.mp3"}, {"w": "touch", "img": "img/s1w4.png", "mp3": "audio/touch.mp3"}, {"w": "what colour?", "img": "img/s1w5.png", "mp3": "audio/whatcolour.mp3"}]}, {"id": "nombres", "n": 2, "fr": "Les nombres", "en": "Numbers", "words": [{"w": "one", "img": "img/s2w0.png", "mp3": "audio/one.mp3"}, {"w": "two", "img": "img/s2w1.png", "mp3": "audio/two.mp3"}, {"w": "three", "img": "img/s2w2.png", "mp3": "audio/three.mp3"}, {"w": "four", "img": "img/s2w3.png", "mp3": "audio/four.mp3"}, {"w": "five", "img": "img/s2w4.png", "mp3": "audio/five.mp3"}, {"w": "how many?", "img": "img/s2w5.png", "mp3": "audio/howmany.mp3"}]}, {"id": "corps", "n": 3, "fr": "Le corps", "en": "The body", "words": [{"w": "head", "img": "img/s3w0.png", "mp3": "audio/head.mp3"}, {"w": "shoulders", "img": "img/s3w1.png", "mp3": "audio/shoulders.mp3"}, {"w": "hand", "img": "img/s3w2.png", "mp3": "audio/hand.mp3"}, {"w": "foot", "img": "img/s3w3.png", "mp3": "audio/foot.mp3"}, {"w": "knee", "img": "img/s3w4.png", "mp3": "audio/knee.mp3"}, {"w": "touch your", "img": "img/s3w5.png", "mp3": "audio/touchyour.mp3"}]}, {"id": "verbes", "n": 4, "fr": "Les verbes d'action", "en": "Action verbs", "words": [{"w": "run", "img": "img/s4w0.png", "mp3": "audio/run.mp3"}, {"w": "walk", "img": "img/s4w1.png", "mp3": "audio/walk.mp3"}, {"w": "jump", "img": "img/s4w2.png", "mp3": "audio/jump.mp3"}, {"w": "stop!", "img": "img/s4w3.png", "mp3": "audio/stop.mp3"}, {"w": "throw", "img": "img/s4w4.png", "mp3": "audio/throw.mp3"}, {"w": "catch", "img": "img/s4w5.png", "mp3": "audio/catch.mp3"}]}, {"id": "animaux", "n": 5, "fr": "Les animaux", "en": "Animals", "words": [{"w": "dog", "img": "img/s5w0.png", "mp3": "audio/dog.mp3"}, {"w": "cat", "img": "img/s5w1.png", "mp3": "audio/cat.mp3"}, {"w": "bird", "img": "img/s5w2.png", "mp3": "audio/bird.mp3"}, {"w": "fish", "img": "img/s5w3.png", "mp3": "audio/fish.mp3"}, {"w": "frog", "img": "img/s5w4.png", "mp3": "audio/frog.mp3"}, {"w": "like a", "img": "img/s5w5.png", "mp3": "audio/likea.mp3"}]}, {"id": "presenter", "n": 6, "fr": "Se présenter", "en": "Introducing yourself", "words": [{"w": "my name is", "img": "img/s6w0.png", "mp3": "audio/mynameis.mp3"}, {"w": "what is your name?", "img": "img/s6w1.png", "mp3": "audio/whatisyourname.mp3"}, {"w": "what's your age?", "img": "img/s6w2.png", "mp3": "audio/whatsyourage.mp3"}, {"w": "how old are you?", "img": "img/s6w3.png", "mp3": "audio/howoldareyou.mp3"}, {"w": "i am six", "img": "img/s6w4.png", "mp3": "audio/iamsix.mp3"}, {"w": "i like", "img": "img/s6w5.png", "mp3": "audio/ilike.mp3"}]}, {"id": "nourriture", "n": 7, "fr": "La nourriture", "en": "Food", "words": [{"w": "apple", "img": "img/s7w0.png", "mp3": "audio/apple.mp3"}, {"w": "banana", "img": "img/s7w1.png", "mp3": "audio/banana.mp3"}, {"w": "bread", "img": "img/s7w2.png", "mp3": "audio/bread.mp3"}, {"w": "milk", "img": "img/s7w3.png", "mp3": "audio/milk.mp3"}, {"w": "i want", "img": "img/s7w4.png", "mp3": "audio/iwant.mp3"}, {"w": "here you are", "img": "img/s7w5.png", "mp3": "audio/hereyouare.mp3"}]}, {"id": "revision", "n": 8, "fr": "On vérifie", "en": "Checking what stuck", "words": [{"w": "red", "img": "img/s8w0.png", "mp3": "audio/red.mp3"}, {"w": "five", "img": "img/s8w1.png", "mp3": "audio/five.mp3"}, {"w": "head", "img": "img/s8w2.png", "mp3": "audio/head.mp3"}, {"w": "jump", "img": "img/s8w3.png", "mp3": "audio/jump.mp3"}, {"w": "dog", "img": "img/s8w4.png", "mp3": "audio/dog.mp3"}, {"w": "my name is", "img": "img/s8w5.png", "mp3": "audio/mynameis.mp3"}]}];
+const I = {
+ back:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>',
+ next:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>',
+ snd:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16.5 8.5a5 5 0 010 7M19 6a8.5 8.5 0 010 12"/></svg>',
+ full:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>',
+ cards:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="2"/></svg>'
+};
+const app = document.getElementById('app');
+const audio = new Audio(); let autoTimer = null, idx = 0, cur = null;
+function play(src, onend){ audio.onended = onend || null; audio.src = src; audio.currentTime = 0; audio.play().catch(()=>{}); }
+function stopAll(){ clearTimeout(autoTimer); autoTimer = null; audio.pause(); audio.onended = null; }
+function route(){
+  stopAll();
+  const h = decodeURIComponent(location.hash.slice(1));
+  const [id, mode] = h.split('-');
+  cur = DATA.find(t => t.id === id);
+  if (!cur) return home();
+  idx = 0; mode === 'sons' ? sounds() : cards();
+}
+function home(){
+  app.innerHTML = `<main class="home"><h1>Flashcards · 8 séances</h1><p>Grande section · CP — tap a picture to hear the word · touchez l'image pour entendre le mot.</p><div class="grid">${DATA.map(t=>`
+    <div class="tile"><div class="top"><span class="n">${t.n}</span><div><b>${t.en}</b><small>${t.fr}</small></div></div>
+    <div class="thumbs">${t.words.map(w=>`<img src="${w.img}" alt="${w.w}">`).join('')}</div>
+    <div class="links"><a class="pri" href="#${t.id}">Cards</a><a href="#${t.id}-sons">Sounds</a></div></div>`).join('')}</div></main>`;
+}
+function head(sub){
+  return `<div class="bar"><a class="icon" href="#" aria-label="All themes">${I.back}</a><div class="t"><b>${cur.n} · ${cur.en}</b><span>${sub}</span></div>
+  <button class="icon" id="fs" aria-label="Full screen">${I.full}</button></div>`;
+}
+function wireFs(){ const b = document.getElementById('fs'); b.onclick = () => { const d=document; (d.fullscreenElement ? d.exitFullscreen() : d.documentElement.requestFullscreen?.())?.catch?.(()=>{}); }; }
+function cards(){
+  const n = cur.words.length;
+  app.innerHTML = `<section class="view">${head('')}<div class="stage"><div class="card" id="card" role="button" tabindex="0" aria-label="Play the word"><img id="pic" alt=""><div class="w" id="word"></div></div></div>
+   <div class="dots">${cur.words.map(()=>'<i></i>').join('')}</div>
+   <div class="ctrl"><button id="prev" aria-label="Previous">${I.back}</button><button class="snd" id="snd">${I.snd}<span>Listen</span></button><button id="nxt" aria-label="Next">${I.next}</button></div>
+   <button class="auto" id="auto" aria-pressed="false">Auto · one word every 4 seconds</button></section>`;
+  wireFs();
+  const card = document.getElementById('card');
+  const show = (i, sound) => { idx = (i + n) % n; const w = cur.words[idx];
+    document.getElementById('pic').src = w.img; document.getElementById('pic').alt = w.w; document.getElementById('word').textContent = w.w;
+    document.querySelector('.bar span').textContent = `${idx+1} / ${n}`;
+    document.querySelectorAll('.dots i').forEach((d,k)=>d.classList.toggle('on',k===idx));
+    if (sound) say(); };
+  const say = () => { card.classList.add('play'); play(cur.words[idx].mp3, () => card.classList.remove('play')); };
+  card.onclick = say; card.onkeydown = e => { if (e.key==='Enter'||e.key===' ') { e.preventDefault(); say(); } };
+  document.getElementById('snd').onclick = say;
+  document.getElementById('prev').onclick = () => show(idx-1, true);
+  document.getElementById('nxt').onclick = () => show(idx+1, true);
+  const auto = document.getElementById('auto');
+  auto.onclick = () => { const on = auto.getAttribute('aria-pressed') !== 'true'; auto.setAttribute('aria-pressed', on);
+    clearTimeout(autoTimer); if (on) { const step = () => { show(idx+1, true); autoTimer = setTimeout(step, 4000); }; say(); autoTimer = setTimeout(step, 4000); } };
+  let x0 = null; card.addEventListener('touchstart', e => { x0 = e.touches[0].clientX; }, {passive:true});
+  card.addEventListener('touchend', e => { if (x0 === null) return; const dx = e.changedTouches[0].clientX - x0; x0 = null; if (Math.abs(dx) > 50) { show(idx + (dx < 0 ? 1 : -1), true); } }, {passive:true});
+  document.onkeydown = e => { if (e.key==='ArrowRight') show(idx+1,true); if (e.key==='ArrowLeft') show(idx-1,true); };
+  show(0, false);
+}
+function sounds(){
+  app.innerHTML = `<section class="view">${head('6 words · 6 mots')}<div class="list">${cur.words.map((w,k)=>`
+    <button class="row" data-k="${k}"><img src="${w.img}" alt=""><b>${w.w}</b><span class="icon" aria-hidden="true">${I.snd}</span></button>`).join('')}</div>
+    <div class="ctrl" style="grid-template-columns:1fr 1fr"><button class="snd" id="all">${I.snd}<span>Play all</span></button><a class="icon" style="width:auto;height:60px;border-radius:16px;text-decoration:none;font-weight:800;display:flex;gap:8px" href="#${cur.id}">${I.cards}<span>Cards</span></a></div></section>`;
+  wireFs();
+  const rows = [...document.querySelectorAll('.row')];
+  const mark = k => rows.forEach((r,j)=>r.classList.toggle('play', j===k));
+  rows.forEach(r => r.onclick = () => { stopAll(); const k=+r.dataset.k; mark(k); play(cur.words[k].mp3, () => mark(-1)); });
+  document.getElementById('all').onclick = () => { stopAll(); let k = 0;
+    const nextW = () => { if (k >= cur.words.length) { mark(-1); return; } mark(k); play(cur.words[k].mp3, () => { k++; autoTimer = setTimeout(nextW, 1500); }); };
+    nextW(); };
+}
+addEventListener('hashchange', route); route();
+</script></body></html>
