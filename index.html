@@ -23,7 +23,7 @@ button:focus-visible,a:focus-visible{outline:3px solid var(--accent);outline-off
 .tile .n{width:30px;height:30px;border:2px solid var(--line);border-radius:50%;display:grid;place-items:center;font-family:var(--display);font-weight:700;flex-shrink:0}
 .tile b{font-family:var(--display);font-size:18px;font-weight:600}
 .tile small{display:block;color:var(--muted);font-size:12.5px}
-.thumbs{display:grid;grid-template-columns:repeat(6,1fr);gap:4px}
+.thumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(34px,1fr));gap:4px}
 .thumbs img{width:100%;aspect-ratio:1;object-fit:contain;background:#fff;border-radius:6px;border:1px solid #ddd8ce}
 .links{display:flex;gap:8px}
 .links a{flex:1;text-align:center;font-weight:800;font-size:13px;border:2px solid var(--line);border-radius:9px;padding:6px 8px;text-decoration:none;color:inherit}
@@ -40,6 +40,9 @@ button:focus-visible,a:focus-visible{outline:3px solid var(--accent);outline-off
 .card{background:var(--card);color:#16140f;border:3px solid #16140f;border-radius:22px;width:min(100%,calc((100vh - 200px) * .8));max-height:100%;aspect-ratio:4/5;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2vh;padding:4%;border-style:solid;touch-action:pan-y;user-select:none}
 .card img{width:100%;flex:1;min-height:0;object-fit:contain}
 .card .w{font-family:var(--display);font-weight:700;font-size:clamp(34px,9vmin,72px);line-height:1;text-align:center}
+.card .txt{display:flex;flex-direction:column;align-items:center;gap:.35em}
+.card .ph{font-weight:800;font-style:italic;font-size:clamp(16px,3.6vmin,30px);line-height:1.15;text-align:center;color:#d9531e}
+.card .fr{font-weight:600;font-size:clamp(14px,3vmin,24px);line-height:1.15;text-align:center;color:#6a645a}
 .card.play{box-shadow:0 0 0 6px var(--accent)}
 .dots{display:flex;justify-content:center;gap:6px;padding:4px 0 10px}
 .dots i{width:9px;height:9px;border-radius:50%;background:var(--muted);opacity:.35}
@@ -54,7 +57,10 @@ button:focus-visible,a:focus-visible{outline:3px solid var(--accent);outline-off
 .list{flex:1;overflow:auto;display:flex;flex-direction:column;gap:8px;padding:12px 0}
 .row{display:flex;align-items:center;gap:12px;background:var(--panel);border:2px solid var(--line);border-radius:14px;padding:8px 10px}
 .row img{width:64px;height:64px;object-fit:contain;background:#fff;border-radius:10px;flex-shrink:0}
-.row b{flex:1;font-family:var(--display);font-size:24px;font-weight:600;min-width:0}
+.row .rw{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px;text-align:left}
+.row b{font-family:var(--display);font-size:24px;font-weight:600;min-width:0}
+.row .ph{font-style:italic;font-weight:800;font-size:14px;color:var(--accent)}
+.row .fr{font-size:13px;color:var(--muted)}
 .row.play{outline:4px solid var(--accent)}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
@@ -94,7 +100,7 @@ function head(sub){
 function wireFs(){ const b = document.getElementById('fs'); b.onclick = () => { const d=document; (d.fullscreenElement ? d.exitFullscreen() : d.documentElement.requestFullscreen?.())?.catch?.(()=>{}); }; }
 function cards(){
   const n = cur.words.length;
-  app.innerHTML = `<section class="view">${head('')}<div class="stage"><div class="card" id="card" role="button" tabindex="0" aria-label="Play the word"><img id="pic" alt=""><div class="w" id="word"></div></div></div>
+  app.innerHTML = `<section class="view">${head('')}<div class="stage"><div class="card" id="card" role="button" tabindex="0" aria-label="Play the word"><img id="pic" alt=""><div class="txt"><div class="w" id="word"></div><div class="ph" id="ph"></div><div class="fr" id="fr"></div></div></div></div>
    <div class="dots">${cur.words.map(()=>'<i></i>').join('')}</div>
    <div class="ctrl"><button id="prev" aria-label="Previous">${I.back}</button><button class="snd" id="snd">${I.snd}<span>Listen</span></button><button id="nxt" aria-label="Next">${I.next}</button></div>
    <button class="auto" id="auto" aria-pressed="false">Auto · one word every 4 seconds</button></section>`;
@@ -102,6 +108,8 @@ function cards(){
   const card = document.getElementById('card');
   const show = (i, sound) => { idx = (i + n) % n; const w = cur.words[idx];
     document.getElementById('pic').src = w.img; document.getElementById('pic').alt = w.w; document.getElementById('word').textContent = w.w;
+    const pe = document.getElementById('ph'), fe = document.getElementById('fr');
+    pe.textContent = w.ph || ''; pe.hidden = !w.ph; fe.textContent = w.fr || ''; fe.hidden = !w.fr;
     document.querySelector('.bar span').textContent = `${idx+1} / ${n}`;
     document.querySelectorAll('.dots i').forEach((d,k)=>d.classList.toggle('on',k===idx));
     if (sound) say(); };
@@ -119,8 +127,8 @@ function cards(){
   show(0, false);
 }
 function sounds(){
-  app.innerHTML = `<section class="view">${head('6 words · 6 mots')}<div class="list">${cur.words.map((w,k)=>`
-    <button class="row" data-k="${k}"><img src="${w.img}" alt=""><b>${w.w}</b><span class="icon" aria-hidden="true">${I.snd}</span></button>`).join('')}</div>
+  app.innerHTML = `<section class="view">${head(`${cur.words.length} words · ${cur.words.length} mots`)}<div class="list">${cur.words.map((w,k)=>`
+    <button class="row" data-k="${k}"><img src="${w.img}" alt=""><span class="rw"><b>${w.w}</b>${w.ph?`<i class="ph">${w.ph}</i>`:''}${w.fr?`<small class="fr">${w.fr}</small>`:''}</span><span class="icon" aria-hidden="true">${I.snd}</span></button>`).join('')}</div>
     <div class="ctrl" style="grid-template-columns:1fr 1fr"><button class="snd" id="all">${I.snd}<span>Play all</span></button><a class="icon" style="width:auto;height:60px;border-radius:16px;text-decoration:none;font-weight:800;display:flex;gap:8px" href="#${cur.id}">${I.cards}<span>Cards</span></a></div></section>`;
   wireFs();
   const rows = [...document.querySelectorAll('.row')];
