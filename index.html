@@ -62,6 +62,19 @@ button:focus-visible,a:focus-visible{outline:3px solid var(--accent);outline-off
 .row .ph{font-style:italic;font-weight:800;font-size:14px;color:var(--accent)}
 .row .fr{font-size:13px;color:var(--muted)}
 .row.play{outline:4px solid var(--accent)}
+/* print view */
+.pr-tools{max-width:900px;margin:0 auto;padding:16px}.pr-tools h1{font-family:var(--display);font-size:24px;margin:0 0 6px}.pr-tools p{color:var(--muted);font-size:14px;margin:0 0 8px}
+.pr-btns{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}.pr-btns a,.pr-btns button{font-weight:800;font-size:14px;border:2px solid var(--line);border-radius:10px;padding:9px 12px;text-decoration:none;color:inherit;background:var(--panel)}
+.pr-btns .pri{background:var(--ink);color:var(--bg)}.pr-btns .on{border-color:var(--accent);box-shadow:inset 0 0 0 2px var(--accent)}
+.prt{display:block;margin-top:10px;text-align:center;font-weight:800;font-size:14px;border:2px solid var(--line);border-radius:14px;padding:11px;text-decoration:none;color:inherit;background:var(--panel)}
+.sheets{display:flex;flex-direction:column;align-items:center;gap:14px;padding:0 8px 30px}
+.sheet{background:#fff;color:#16140f;width:210mm;max-width:100%;aspect-ratio:210/297;padding:10mm;display:grid;grid-template-rows:1fr 1fr;gap:8mm;box-shadow:0 1px 6px rgba(0,0,0,.25);overflow:hidden}
+.pc{border:1px dashed #999;border-radius:6mm;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;min-height:0;padding:4mm}
+.pc img{width:92%;height:92%;min-height:0;object-fit:contain}.pc.empty{border-color:transparent}
+.pc .bw{font-family:var(--display);font-weight:700;line-height:1.05;text-align:center}.pc .bp{font-style:italic;font-weight:800;font-size:11mm;color:#d9531e;margin-top:4mm;text-align:center}
+.pc .bf{font-size:9mm;color:#6a645a;margin-top:2mm;text-align:center}.pc .bt{font-size:4mm;color:#999;margin-top:6mm}
+@media print{@page{size:A4 portrait;margin:0}html,body{height:auto;background:#fff}.noprint{display:none!important}.sheets{display:block;padding:0}
+.sheet{width:210mm;height:297mm;max-width:none;aspect-ratio:auto;box-shadow:none;page-break-after:always;break-after:page}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head><body>
@@ -83,6 +96,7 @@ function route(){
   stopAll();
   const h = decodeURIComponent(location.hash.slice(1));
   const [id, mode] = h.split('-');
+  if (mode === 'print' || mode === 'print2') { if (id === 'all' || DATA.some(t => t.id === id)) return printView(id, mode === 'print2'); }
   cur = DATA.find(t => t.id === id);
   if (!cur) return home();
   idx = 0; mode === 'sons' ? sounds() : cards();
@@ -91,7 +105,7 @@ function home(){
   app.innerHTML = `<main class="home"><h1>Flashcards · 12 thèmes</h1><p>Grande section · CP — tap a picture to hear the word · touchez l'image pour entendre le mot.</p><div class="grid">${DATA.map(t=>`
     <div class="tile"><div class="top"><span class="n">${t.n}</span><div><b>${t.en}</b><small>${t.fr}</small></div></div>
     <div class="thumbs">${t.words.map(w=>`<img src="${w.img}" alt="${w.w}">`).join('')}</div>
-    <div class="links"><a class="pri" href="#${t.id}">Cards</a><a href="#${t.id}-sons">Sounds</a></div></div>`).join('')}</div></main>`;
+    <div class="links"><a class="pri" href="#${t.id}">Cards</a><a href="#${t.id}-sons">Sounds</a><a href="#${t.id}-print">Print</a></div></div>`).join('')}</div><a class="prt" href="#all-print">Imprimer toutes les flashcards · Print all the flashcards</a></main>`;
 }
 function head(sub){
   return `<div class="bar"><a class="icon" href="#" aria-label="All themes">${I.back}</a><div class="t"><b>${cur.n} · ${cur.en}</b><span>${sub}</span></div>
@@ -103,7 +117,7 @@ function cards(){
   app.innerHTML = `<section class="view">${head('')}<div class="stage"><div class="card" id="card" role="button" tabindex="0" aria-label="Play the word"><img id="pic" alt=""><div class="txt"><div class="w" id="word"></div><div class="ph" id="ph"></div><div class="fr" id="fr"></div></div></div></div>
    <div class="dots">${cur.words.map(()=>'<i></i>').join('')}</div>
    <div class="ctrl"><button id="prev" aria-label="Previous">${I.back}</button><button class="snd" id="snd">${I.snd}<span>Listen</span></button><button id="nxt" aria-label="Next">${I.next}</button></div>
-   <button class="auto" id="auto" aria-pressed="false">Auto · one word every 4 seconds</button></section>`;
+   <button class="auto" id="auto" aria-pressed="false">Auto · one word every 4 seconds</button><a class="prt" href="#${cur.id}-print">Flashcards à imprimer · Print the flashcards</a></section>`;
   wireFs();
   const card = document.getElementById('card');
   const show = (i, sound) => { idx = (i + n) % n; const w = cur.words[idx];
@@ -137,6 +151,27 @@ function sounds(){
   document.getElementById('all').onclick = () => { stopAll(); let k = 0;
     const nextW = () => { if (k >= cur.words.length) { mark(-1); return; } mark(k); play(cur.words[k].mp3, () => { k++; autoTimer = setTimeout(nextW, 1500); }); };
     nextW(); };
+}
+const PH_IMG = new Set(['img/s1w5.png','img/s2w5.png','img/s3w5.png','img/s5w5.png','img/s6w1.png','img/s6w4.png']); // images d'attente « … » : pas de carte à imprimer
+function printView(id, duplex){
+  const themes = id === 'all' ? DATA.filter(t => t.id !== 'revision') : DATA.filter(t => t.id === id);
+  const words = themes.flatMap(t => t.words.filter(w => !PH_IMG.has(w.img)).map(w => ({...w, t})));
+  const front = w => w ? `<div class="pc"><img src="${w.img}" alt="${w.w}"></div>` : '<div class="pc empty"></div>';
+  const size = s => s.length > 14 ? 13 : s.length > 9 ? 18 : 26;
+  const back = w => w ? `<div class="pc"><div class="bw" style="font-size:${size(w.w)}mm">${w.w}</div>${w.ph ? `<div class="bp">${w.ph}</div>` : ''}${w.fr ? `<div class="bf">${w.fr}</div>` : ''}<div class="bt">${w.t.n} · ${w.t.en} · ${w.t.fr}</div></div>` : '<div class="pc empty"></div>';
+  let sheets = '';
+  for (let i = 0; i < words.length; i += 2) {
+    sheets += `<div class="sheet">${front(words[i])}${front(words[i+1])}</div>`;
+    if (duplex) sheets += `<div class="sheet">${back(words[i])}${back(words[i+1])}</div>`;
+  }
+  const name = id === 'all' ? 'Tous les thèmes · All themes' : `${themes[0].n} · ${themes[0].fr} · ${themes[0].en}`;
+  const pages = Math.ceil(words.length / 2);
+  app.innerHTML = `<div class="pr-tools noprint"><h1>Flashcards à imprimer · Printable flashcards</h1><p><b>${name}</b> — ${words.length} cartes, ${pages} feuille${pages > 1 ? 's' : ''} A4 (deux cartes par feuille).</p>
+   <p>${duplex ? 'Recto verso : l\'image devant ; le mot, la prononciation et la traduction au dos. Dans la fenêtre d\'impression, choisir « recto verso », « retourner sur le bord long ». · Two-sided: picture on the front; word, pronunciation and translation on the back (flip on long edge).' : 'Images seules : rien n\'est écrit sur les cartes. · Pictures only: nothing is written on the cards.'}</p>
+   <div class="pr-btns"><button class="pri" id="doprint">Imprimer · Print</button><a class="${duplex ? '' : 'on'}" href="#${id}-print">Images seules</a><a class="${duplex ? 'on' : ''}" href="#${id}-print2">Recto verso, texte au dos</a>
+   ${id === 'all' ? '' : `<a href="#all-print${duplex ? '2' : ''}">Tous les thèmes</a><a href="#${id}">← Cartes et sons</a>`}<a href="#">← Accueil</a></div></div><div class="sheets">${sheets}</div>`;
+  document.getElementById('doprint').onclick = () => window.print();
+  document.onkeydown = null;
 }
 addEventListener('hashchange', route); route();
 </script></body></html>
