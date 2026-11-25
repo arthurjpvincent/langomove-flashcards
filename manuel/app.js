@@ -19,7 +19,7 @@
       back24: '‹ Les 24 jeux', inten: 'intensité', de: 'de {} à {}', but: "But pour l'élève", vid: 'Voir le jeu en 30 secondes', film: 'Le film du jeu', which: 'Avec quel thème ?', base: 'base', change: 'Ce qui change',
       dire: "Ce que l'on dit", ens: "L'enseignant dit", el: "L'élève dit", disp: 'Dispositif et matériel', mener: 'Mener le jeu', regle: 'Règle à connaître', vig: 'Point de vigilance', room: 'Mener ce jeu dans la salle',
       vocab: 'Le vocabulaire : ', reserve: 'En réserve', fc: 'Flashcards à imprimer et sons', objobs: 'Objectifs et observation', langue: 'Objectif de langue', al: 'Activité langagière', corps: 'Objectif pour le corps',
-      obs: "Ce que l'enseignant observe", vars: 'Les variables', simp: 'Pour simplifier', comp: 'Pour complexifier', intens: "Pour monter ou baisser l'intensité", altname: 'Nom du jeu chez les volontaires : ', listen: 'Écouter : ',
+      obs: "Ce que l'enseignant observe", vars: 'Les variables', simp: 'Pour simplifier', comp: 'Pour complexifier', intens: "Pour monter ou baisser l'intensité", altname: 'Nom du jeu chez les volontaires : ', adapted: 'Toute la fiche est écrite pour ce thème.', basethm: 'Thème de base du jeu. Choisir un autre thème réécrit toute la fiche.', also: 'Avec ce thème', vidbase: 'tournée avec le thème ', basemore: 'Les autres versions du jeu et ses compléments sont décrits avec le thème de base : ', listen: 'Écouter : ',
       k6: 'Six mots par séance', h12: 'Les 12 thèmes', back12: '‹ Les 12 thèmes', six: 'Les six mots de la séance', gbase: "Jeux dont c'est le thème de base", gplug: 'Jeux où il se branche', nonegame: 'Aucun.', today6: 'les mots de la séance du jour',
       kcl: '31 phrases, toujours avec le même geste', hcl: 'Phrases pour gérer la classe', pcl: "La phrase n'est pas traduite aux élèves : le français est là pour l'enseignant.", geste: 'geste : ',
       kse: 'Composer sa séance', hse: 'Huit séances prêtes', pse: "En GS : 30 minutes, trois jeux, six mots. En CP : 45 minutes, quatre jeux, six mots. L'ordre suit la courbe calme, intense, calme.", prepbtn: 'Préparer une séance en trois questions',
@@ -40,7 +40,7 @@
       back24: '‹ The 24 games', inten: 'intensity', de: '{} to {}', but: "The child's goal", vid: 'Watch the game in 30 seconds', film: 'The game in four pictures', which: 'With which theme?', base: 'base', change: 'What changes',
       dire: 'What is said', ens: 'The teacher says', el: 'The child says', disp: 'Set-up and equipment', mener: 'Running the game', regle: 'Rule to know', vig: 'Watch out', room: 'Run this game in the hall',
       vocab: 'Vocabulary: ', reserve: 'Extra words', fc: 'Printable flashcards and sounds', objobs: 'Aims and observation', langue: 'Language aim', al: 'Language activity', corps: 'Movement aim',
-      obs: 'What the teacher looks for', vars: 'Variations', simp: 'Easier', comp: 'Harder', intens: 'More or less intense', altname: 'Name in the French handbook: ', listen: 'Listen: ',
+      obs: 'What the teacher looks for', vars: 'Variations', simp: 'Easier', comp: 'Harder', intens: 'More or less intense', altname: 'Name in the French handbook: ', adapted: 'The whole sheet is written for this theme.', basethm: "The game's base theme. Choosing another theme rewrites the whole sheet.", also: 'With this theme', vidbase: 'filmed with the theme: ', basemore: 'Other versions of the game and its extras are described with the base theme: ', listen: 'Listen: ',
       k6: 'Six words per session', h12: 'The 12 themes', back12: '‹ The 12 themes', six: 'The six words of the session', gbase: 'Games with this base theme', gplug: 'Games it plugs into', nonegame: 'None.', today6: "the words of the day's session",
       kcl: '31 phrases, always with the same gesture', hcl: 'Classroom-management phrases', pcl: 'Phrases to keep in English for the whole session. Each one always goes with the same gesture.', geste: 'gesture: ',
       kse: 'Building a session', hse: 'Eight ready-made sessions', pse: 'Ages 5 to 6 (GS): 30 minutes, three games, six words. Ages 6 to 7 (CP): 45 minutes, four games, six words. The order follows a calm, intense, calm curve.', prepbtn: 'Plan a session in three questions',
@@ -134,29 +134,68 @@
     app.querySelectorAll('[data-mom]').forEach(function (b) { b.addEventListener('click', function () { st.mom = b.getAttribute('data-mom'); app.querySelectorAll('[data-mom]').forEach(function (x) { x.setAttribute('aria-pressed', x === b); }); upd(); }); });
   }
 
-  /* ---------- A · fiche du jeu ---------- */
+  /* ---------- A · fiche du jeu : toute la fiche suit le thème choisi ---------- */
+  var TC = { couleurs: '#be185d', nombres: '#1d4ed8', corps: '#c2410c', verbes: '#15803d', animaux: '#a16207', alphabet: '#4338ca', emotions: '#7e22ce', presenter: '#0f766e', nourriture: '#b91c1c', jours: '#0369a1', meteo: '#475569', revision: '#44403c' };
+  var flash = false;
+  function redraw(svg, mode) {            /* objets de couleur au sol → cartes blanches, ou rien */
+    return svg.replace(/<path d="M([\d.]+),([\d.]+) L[^"]*Z" fill="(?:#d5342a|#2f6fd0|#2a9d5c|#e8b900)"[^>]*\/>/g, function (_, x, y) {
+      if (mode === 'none') return ''; x = +x; y = +y + 7;
+      return '<rect x="' + (x - 5) + '" y="' + (y - 6.5) + '" width="10" height="13" rx="1.3" fill="#fff" stroke="#111" stroke-width="1.2"/>';
+    });
+  }
+  function rebub(svg, texts) {            /* les bulles des vues prennent les phrases du thème */
+    var n = -1;
+    return svg.replace(/(<line [^>]*stroke-width="1\.2"\/>)?<rect x="([\d.]+)" y="([\d.]+)" width="([\d.]+)" height="14" rx="5" fill="#fbf3e4"[^>]*\/><text x="([\d.]+)"([^>]*)>[^<]*<\/text>/g, function (m, line, x, y, w0, cx, rest) {
+      n++; var t = texts[n]; if (t === undefined) return '';
+      var w = Math.max(22, 4.75 * t.length + 10), nx = Math.min(Math.max(+cx - w / 2, 4), 196 - w);
+      return (line || '') + '<rect x="' + nx + '" y="' + y + '" width="' + w + '" height="14" rx="5" fill="#fbf3e4" stroke="#111" stroke-width="1.2"/><text x="' + (nx + w / 2) + '"' + rest + '>' + esc(t) + '</text>';
+    });
+  }
+  function themed(g, tid) {
+    var v = g.themes.filter(function (t) { return t.id === tid; })[0];
+    if (!v || !v.o) return { g: g, v: v || null, ch: {} };
+    var o = v.o, x = Object.create(g), ch = {};
+    ['but', 'langue', 'dispositif', 'regle', 'vig', 'observe', 'simp', 'comp', 'intens', 'mener', 'adulte', 'eleve'].forEach(function (f) { if (o[f] !== undefined) { x[f] = o[f]; ch[f] = 1; } });
+    x.vues = g.vues.map(function (u, i) {
+      var says = o.says[i + 1], svg = u.svg;
+      if (o.draw) svg = redraw(svg, o.draw);
+      if (says) svg = rebub(svg, says.map(function (s) { return s.en; }));
+      if (o.v[i] || says || o.draw) ch.vues = 1;
+      return { t: u.t, fr: o.v[i] || u.fr, says: says || u.says, svg: svg };
+    });
+    x.autres = []; x.extra = [];
+    return { g: x, v: v, ch: ch };
+  }
   function game(k, tid) {
-    var g = G[k]; if (!g) return home();
-    var v = g.themes.filter(function (t) { return t.id === tid; })[0], cur = v ? tid : g.theme;
-    document.documentElement.style.setProperty('--a', COL[g.m]);
-    var chips = [g.theme].concat(g.themes.map(function (t) { return t.id; })).map(function (id) { return '<button class="chip" data-th="' + id + '" aria-pressed="' + (id === cur) + '">' + esc(thChip(id)) + (id === g.theme ? ' · ' + L.base : '') + '</button>'; }).join('');
+    var g0 = G[k]; if (!g0) return home();
+    var tv = themed(g0, tid), g = tv.g, v = tv.v, ch = tv.ch, cur = v ? tid : g0.theme, col = TC[cur] || COL[g0.m];
+    document.documentElement.style.setProperty('--a', col);
+    var tg = function () { for (var i = 0; i < arguments.length; i++) if (ch[arguments[i]]) return '<span class="tg">' + esc(thChip(cur)) + '</span>'; return ''; };
+    var cg = function () { for (var i = 0; i < arguments.length; i++) if (ch[arguments[i]]) return ' chg'; return ''; };
+    var chips = [g0.theme].concat(g0.themes.map(function (t) { return t.id; })).map(function (id) { return '<button class="chip" style="--c:' + TC[id] + '" data-th="' + id + '" aria-pressed="' + (id === cur) + '"><span class="dot" aria-hidden="true"></span>' + esc(thChip(id)) + (id === g0.theme ? ' · ' + L.base : '') + '</button>'; }).join('');
     var det = function (t, h) { return '<details><summary>' + t + '</summary><div class="in">' + h + '</div></details>'; };
-    var vars = '<div class="card"><b>' + L.simp + '</b>' + g.simp + '</div><div class="card"><b>' + L.comp + '</b>' + g.comp + '</div>' + (g.intens ? '<div class="card"><b>' + L.intens + '</b>' + g.intens + '</div>' : '') + g.autres.map(function (a) { return '<div class="card"><b>' + esc(a[0]) + '</b>' + a[1] + '</div>'; }).join('');
-    var obj = '<div class="card"><b>' + L.langue + '</b>' + esc(g.langue) + '<br><span class="small">' + L.al + ' : ' + esc(g.al.join(' · ')) + '</span></div><div class="card"><b>' + L.corps + '</b>' + esc(g.corps) + '</div><div class="card"><b>' + L.obs + '</b>' + g.observe + '</div>' +
+    var card = function (f, label, h, cls) { return h ? '<div class="card' + (cls || '') + cg(f) + '"><b>' + label + tg(f) + '</b>' + h + '</div>' : ''; };
+    var vars = card('simp', L.simp, g.simp) + card('comp', L.comp, g.comp) + card('intens', L.intens, g.intens) + g.autres.map(function (a) { return '<div class="card"><b>' + esc(a[0]) + '</b>' + a[1] + '</div>'; }).join('');
+    var obj = card('langue', L.langue, esc(g.langue) + '<br><span class="small">' + L.al + ' : ' + esc(g.al.join(' · ')) + '</span>') + card('', L.corps, esc(g.corps)) + card('observe', L.obs, g.observe) +
       g.items.map(function (c) { var it = M.items[c]; return '<p><span class="pill">' + c + '</span>' + (it ? esc(it.cp) + (it.gs && it.gs !== '—' ? ' <span class="small">(' + L.gsl + esc(it.gs) + ')</span>' : '') : '') + '</p>'; }).join('');
     var alt = LANG === 'fr' ? '<b>' + esc(g.en) + '</b> [' + esc(g.enpr) + ']' : '<b>' + esc(g.titre_fr) + '</b>';
-    app.innerHTML = '<div class="hero" style="background:' + COL[g.m] + '"><a class="back" href="' + H() + '">' + L.back24 + '</a><h1>' + g.n + ' · ' + esc(g.titre) + '</h1><span class="meta">' + esc(cap(g.place)) + ' · ' + esc(g.duree) + ' · ' + esc(g.niveau) + ' · ' + L.inten + ' ' + dots(g.inten[0], g.inten[1]) + '</span></div>' +
-      '<div class="but"><b>' + L.but + '</b>' + esc(g.but) + '</div><div class="btns"><button class="btn pri" id="vbtn"><span class="tri" aria-hidden="true"></span>' + L.vid + '</button></div><div id="vid"></div>' +
-      '<h2>' + L.film + '</h2><div class="film">' + g.vues.map(function (u, i) { return '<div class="vue">' + u.svg + '<div class="cap"><span class="n">' + (i + 1) + '</span><span>' + esc(u.fr) + '</span></div></div>'; }).join('') + '</div>' +
-      '<h2>' + L.which + '</h2><div class="chips">' + chips + '</div>' + (v ? '<div class="change"><b class="small">' + L.change + '</b><br>' + v.h + '</div>' : '') +
-      '<h2>' + L.dire + '</h2><div class="who">' + L.ens + '</div>' + (v ? v.ph.map(function (s) { return ph(s); }).join('') : '') + g.adulte.map(function (s) { return ph(s); }).join('') +
+    var more = v && (g0.autres.length || g0.extra.length) ? '<p class="small" style="margin-top:12px">' + L.basemore + '<a href="' + H('jeu/' + k) + '">' + esc(thChip(g0.theme)) + '</a>.</p>' : '';
+    app.innerHTML = '<div class="hero" style="background:' + col + '"><a class="back" href="' + H() + '">' + L.back24 + '</a><h1>' + g.n + ' · ' + esc(g.titre) + '</h1><span class="meta">' + esc(cap(g.place)) + ' · ' + esc(g.duree) + ' · ' + esc(g.niveau) + ' · ' + L.inten + ' ' + dots(g.inten[0], g.inten[1]) + '</span></div>' +
+      '<div class="thbar"><div class="thl"><b>' + L.theme + ' : ' + esc(M.thn[cur]) + '</b><span>' + (v ? L.adapted : L.basethm) + '</span></div><div class="chips">' + chips + '</div></div>' +
+      '<div class="but' + cg('but') + '"><b>' + L.but + tg('but') + '</b>' + esc(g.but) + '</div>' + (v ? '<div class="change chg"><b class="small">' + L.change + '</b><br>' + v.h + '</div>' : '') +
+      (!v ? g0.aussi.map(function (a) { return '<div class="change"><b class="small">' + L.also + '</b><br>' + a.h + (a.ph.length ? '<br>' + a.ph.map(sayInline).join(' · ') : '') + '</div>'; }).join('') : '') +
+      '<div class="btns"><button class="btn pri" id="vbtn"><span class="tri" aria-hidden="true"></span>' + L.vid + (v ? ' · ' + L.vidbase + esc(thChip(g0.theme).toLowerCase()) : '') + '</button></div><div id="vid"></div>' +
+      '<h2>' + L.film + tg('vues') + '</h2><div class="film">' + g.vues.map(function (u, i) { return '<div class="vue' + cg('vues') + '">' + u.svg + '<div class="cap"><span class="n">' + (i + 1) + '</span><span>' + esc(u.fr) + '</span></div></div>'; }).join('') + '</div>' +
+      '<h2>' + L.dire + tg('adulte', 'eleve') + '</h2><div class="who">' + L.ens + '</div>' + (v && !ch.adulte ? v.ph.map(function (s) { return ph(s); }).join('') : '') + g.adulte.map(function (s) { return ph(s); }).join('') +
       (g.eleve.length ? '<div class="who">' + L.el + '</div>' + g.eleve.map(function (s) { return ph(s); }).join('') : '') +
-      '<h2>' + L.disp + '</h2><p>' + esc(g.dispositif) + '</p><h2>' + L.mener + '</h2>' + g.mener.map(function (m) { return '<div class="card"><b>' + m.t + '</b>' + m.h + '</div>'; }).join('') + (g.regle ? '<div class="card"><b>' + L.regle + '</b>' + g.regle + '</div>' : '') +
-      '<div class="card vig"><b>' + L.vig + '</b>' + g.vig + '</div><div class="btns"><a class="btn acc" href="' + H('go/j/' + g.k + (v ? '~' + cur : '') + '/0') + '">' + L.room + '</a></div>' +
-      '<h2>' + L.vocab + esc(M.thn[cur].toLowerCase()) + '</h2>' + vocab(cur) + det(L.objobs, obj) + det(L.vars, vars) + g.extra.map(function (x) { return det(esc(x.t), x.h); }).join('') +
+      '<h2>' + L.disp + tg('dispositif') + '</h2><p class="' + cg('dispositif').trim() + '">' + esc(g.dispositif) + '</p><h2>' + L.mener + tg('mener', 'regle') + '</h2>' + g.mener.map(function (m) { return '<div class="card' + cg('mener') + '"><b>' + m.t + '</b>' + m.h + '</div>'; }).join('') + card('regle', L.regle, g.regle) +
+      card('vig', L.vig, g.vig, ' vig') + '<div class="btns"><a class="btn acc" href="' + H('go/j/' + g.k + (v ? '~' + cur : '') + '/0') + '">' + L.room + '</a></div>' +
+      '<h2>' + L.vocab + esc(M.thn[cur].toLowerCase()) + '</h2>' + vocab(cur) + det(L.objobs + tg('langue', 'observe'), obj) + det(L.vars + tg('simp', 'comp', 'intens'), vars) + g.extra.map(function (x) { return det(esc(x.t), x.h); }).join('') + more +
       '<p class="small" style="margin-top:14px">' + L.altname + alt + '</p>';
     document.getElementById('vbtn').addEventListener('click', function () { document.getElementById('vid').innerHTML = '<div class="video"><video controls playsinline autoplay src="' + esc(g.video) + '"></video></div>'; this.parentNode.style.display = 'none'; });
-    app.querySelectorAll('[data-th]').forEach(function (b) { b.addEventListener('click', function () { var id = b.getAttribute('data-th'); keepScroll = true; location.replace(H('jeu/' + k + (id === g.theme ? '' : '/' + id))); }); });
+    app.querySelectorAll('[data-th]').forEach(function (b) { b.addEventListener('click', function () { var id = b.getAttribute('data-th'); if (id === cur) return; keepScroll = true; flash = true; location.replace(H('jeu/' + k + (id === g0.theme ? '' : '/' + id))); }); });
+    var on = app.querySelector('.thbar [aria-pressed="true"]'); if (on && on.scrollIntoView) { var bar = on.parentNode; bar.scrollLeft = Math.max(0, on.offsetLeft - 40); }
+    if (flash) { flash = false; app.classList.remove('flash'); void app.offsetWidth; app.classList.add('flash'); }
   }
 
   /* ---------- thèmes, phrases de classe ---------- */
@@ -181,8 +220,8 @@
   function audioOf(list) {
     var set = {}, add = function (a) { if (a) set[a] = 1; }, scan = function (h) { (h || '').replace(/data-a="([^"]+)"/g, function (_, a) { add(a); }); };
     list.forEach(function (en) {
-      var g = en.g; g.adulte.concat(g.eleve).forEach(function (s) { add(s.a); }); g.vues.forEach(function (u) { u.says.forEach(function (s) { add(s.a); }); });
-      g.themes.forEach(function (t) { if (t.id === en.theme) { t.ph.forEach(function (s) { add(s.a); }); scan(t.h); } }); scan(g.observe);
+      var g = themed(en.g, en.theme).g; g.adulte.concat(g.eleve).forEach(function (s) { add(s.a); }); g.vues.forEach(function (u) { u.says.forEach(function (s) { add(s.a); }); });
+      en.g.themes.forEach(function (t) { if (t.id === en.theme) { t.ph.forEach(function (s) { add(s.a); }); scan(t.h); } }); scan(g.observe);
       var t = TH[en.theme]; if (t) t.six.forEach(function (w) { add(w.a); });
     });
     return Object.keys(set);
@@ -317,11 +356,10 @@
       delete T0[key]; return;
     }
     if (!T0[key]) T0[key] = { start: Date.now(), games: {} };
-    var en = list[pos], g = en.g; step = Math.min(3, Math.max(0, step)); var u = g.vues[step];
-    var v = en.theme !== g.theme ? g.themes.filter(function (x) { return x.id === en.theme; })[0] : null;
+    var en = list[pos], tv = themed(en.g, en.theme), g = tv.g, v = tv.v; step = Math.min(3, Math.max(0, step)); var u = g.vues[step];
     if (!T0[key].games[pos]) T0[key].games[pos] = Date.now();
     var says = u.says.slice();
-    if (step === 1 && v) says = v.ph.concat(says).slice(0, 2);
+    if (step === 1 && v && !v.o) says = v.ph.concat(says).slice(0, 2);
     if (step === 1 && !says.length && g.adulte.length) says = [g.adulte[0]];
     var nt = '';
     if (step === 0) nt = '<div class="pnote"><b>' + L.disp + '</b>' + esc(g.dispositif) + '</div>' + (v ? '<div class="pnote"><b>' + L.withth + esc(M.thn[en.theme].toLowerCase()) + '</b>' + v.h + '</div>' : (en.plus ? '<div class="pnote"><b>' + L.inthis + '</b>' + esc(cap(en.plus)) + '</div>' : ''));

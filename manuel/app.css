@@ -147,3 +147,18 @@ body.play #app { padding-bottom: calc(16px + env(safe-area-inset-bottom)); displ
 .og i { font-style: normal; font-weight: 600; color: var(--mut); white-space: nowrap; } .og.l3 i { color: #166534; } .og.l2 i { color: #1d4ed8; } .og.l1 i { color: #9a3412; }
 .pnav2 a.hi { background: #fdba74; color: #1c1917; border-color: #fdba74; font-weight: 700; }
 #nav a { font-size: 12.5px; }
+
+/* le thème choisi habille toute la fiche */
+.thbar { position: sticky; top: 0; z-index: 4; margin: 0 -16px; padding: 8px 16px 10px; background: #fff; border-bottom: 4px solid var(--a); display: flex; flex-direction: column; gap: 6px; }
+.thl { display: flex; flex-direction: column; } .thl b { color: var(--a); font-size: 15.5px; } .thl span { font-size: 12.5px; color: var(--mut); }
+.thbar .chips { flex-wrap: nowrap; overflow-x: auto; margin: 0 -16px; padding: 2px 16px; scrollbar-width: none; } .thbar .chips::-webkit-scrollbar { display: none; }
+.thbar .chip { flex: none; display: inline-flex; align-items: center; gap: 7px; border-color: var(--c); min-height: 40px; }
+.thbar .chip .dot { width: 12px; height: 12px; border-radius: 6px; background: var(--c); }
+.thbar .chip[aria-pressed="true"] { background: var(--c); border-color: var(--c); color: #fff; } .thbar .chip[aria-pressed="true"] .dot { background: #fff; }
+.tg { display: inline-block; margin-left: 8px; font-size: 11px; font-weight: 700; letter-spacing: .03em; text-transform: uppercase; color: #fff; background: var(--a); border-radius: 4px; padding: 1px 6px; vertical-align: middle; }
+.card > b:first-child .tg, .but b .tg { margin-left: 6px; }
+.change { border-color: var(--a); }
+@keyframes wash { 0% { box-shadow: 0 0 0 3px var(--a), 0 0 0 9999px transparent; background-color: color-mix(in srgb, var(--a) 22%, #fff); } 100% { box-shadow: 0 0 0 0 transparent; } }
+@keyframes heroin { 0% { filter: brightness(1.7) saturate(.6); } 100% { filter: none; } }
+.flash .chg { animation: wash 1.4s ease-out; border-radius: 12px; } .flash .hero, .flash .thbar { animation: heroin .7s ease-out; }
+@media (prefers-reduced-motion: reduce) { .flash .chg, .flash .hero, .flash .thbar { animation: none; } }
